@@ -36,6 +36,9 @@ export class Charge extends AbstractEntity {
   })
   status: ChargeStatus;
 
+  @Column({ nullable: true })
+  user_id: string;
+
   constructor(partial: Partial<Charge>) {
     super(partial);
   }

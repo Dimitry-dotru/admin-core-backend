@@ -16,25 +16,20 @@ export class ChargesService {
   ) {}
 
   async create(createChargeDto: CreateChargeDto) {
-    const charge = this.chargesRepository.create({
-      ...createChargeDto,
-      product: undefined,
+    const product = await this.productsRepository.findOne({
+      where: { id: createChargeDto.product_id },
     });
 
-    if (createChargeDto.productId) {
-      const product = await this.productsRepository.findOne({
-        where: { id: createChargeDto.productId },
-      });
-
-      if (!product) {
-        throw new HttpException(
-          `Product with ID ${createChargeDto.productId} not found`,
-          HttpStatus.NOT_FOUND,
-        );
-      }
-
-      charge.product = product;
+    if (!product) {
+      throw new HttpException(
+        `Product with ID ${createChargeDto.product_id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
     }
+    const charge = this.chargesRepository.create({
+      ...createChargeDto,
+      product,
+    });
 
     return this.chargesRepository.save(charge);
   }

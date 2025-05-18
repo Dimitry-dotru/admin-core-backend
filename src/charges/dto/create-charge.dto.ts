@@ -5,7 +5,6 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentPlatform } from 'common/enums/payment-platforms';
@@ -22,11 +21,6 @@ export class CreateChargeDto {
   @IsNotEmpty()
   amount: number;
 
-  @ApiProperty({ example: 'Premium Subscription' })
-  @IsString()
-  @IsNotEmpty()
-  product: string;
-
   @ApiProperty({ example: PaymentPlatform.STRIPE, enum: PaymentPlatform })
   @IsEnum(PaymentPlatform)
   payment_platform: PaymentPlatform;
@@ -42,10 +36,10 @@ export class CreateChargeDto {
   @ApiProperty({ example: 1 })
   @IsNumber()
   @IsNotEmpty()
-  user_id: number;
+  user_id: string;
 
   @ApiProperty({ example: 1, required: false })
   @IsNumber()
   @IsOptional()
-  productId?: number;
+  product_id?: number;
 }
