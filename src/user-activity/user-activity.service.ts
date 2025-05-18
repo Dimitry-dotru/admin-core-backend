@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserActivity } from './entities/user-activity.entity';
 import { Request } from 'express';
-import { User } from '../users/entities/user.entity';
 import * as useragent from 'useragent';
 import { ActivityActionType } from 'common/enums/activity-action-type';
+import { User } from 'src/users/entities/user.entity';
+import { UserActivity } from './entitites/user-activity.entity';
 
 interface Agent {
   family: string;
@@ -15,15 +15,20 @@ interface Agent {
   device: {
     family: string;
   };
+  os: {
+    family: string;
+    major: string;
+    minor: string;
+  };
 }
 
-export type ActivityLogOptions = {
+export interface ActivityLogOptions {
   action: ActivityActionType;
   userId: number;
   details?: string;
   metadata?: Record<string, any>;
   request?: Request;
-};
+}
 
 @Injectable()
 export class UserActivityService {
@@ -45,7 +50,7 @@ export class UserActivityService {
     });
 
     if (!user || !user.admin) {
-      throw new Error('User not found');
+      throw new Error(`User with ID ${userId} not found`);
     }
 
     const activity = this.userActivityRepository.create({
@@ -73,8 +78,8 @@ export class UserActivityService {
         const agent = useragent.parse(userAgentString) as unknown as Agent;
 
         if (agent && typeof agent === 'object') {
-          if (agent.family && agent.major && agent.minor && agent.patch) {
-            activity.browser = `${agent.family} ${agent.major}.${agent.minor}.${agent.patch}`;
+          if (agent.family && agent.major) {
+            activity.browser = `${agent.family} ${agent.major}${agent.minor ? '.' + agent.minor : ''}${agent.patch ? '.' + agent.patch : ''}`;
           } else {
             activity.browser = 'Unknown Browser';
           }
@@ -89,12 +94,31 @@ export class UserActivityService {
           } else {
             activity.device = 'Unknown Device';
           }
+
+          if (agent.os && typeof agent.os === 'object' && agent.os.family) {
+            if (!activity.metadata) {
+              activity.metadata = {};
+            }
+            activity.metadata.os = `${agent.os.family} ${agent.os.major || ''}${agent.os.minor ? '.' + agent.os.minor : ''}`;
+          }
         }
       } catch (error) {
         activity.browser = 'Unknown Browser';
         activity.device = 'Unknown Device';
         console.error('Error parsing user agent:', error);
       }
+    }
+
+    if (!activity.metadata) {
+      activity.metadata = {};
+    }
+
+    if (request.path) {
+      activity.metadata.path = request.path;
+    }
+
+    if (request.method) {
+      activity.metadata.method = request.method;
     }
   }
 
@@ -112,22 +136,98 @@ export class UserActivityService {
       return Array.isArray(realIp) ? realIp[0] : realIp;
     }
 
-    return request.ip || request.socket.remoteAddress || 'Unknown';
+    return request.ip || request.socket?.remoteAddress || 'Unknown';
   }
 
   async getRecentActivities(
     limit: number = 50,
     adminId?: number,
+    userId?: number,
+    actionType?: ActivityActionType,
+    startDate?: Date,
+    endDate?: Date,
   ): Promise<UserActivity[]> {
     const query = this.userActivityRepository
       .createQueryBuilder('activity')
-      .orderBy('activity.created_at', 'DESC')
-      .take(limit);
+      .orderBy('activity.created_at', 'DESC');
+
+    if (limit) {
+      query.take(limit);
+    }
 
     if (adminId) {
-      query.where('activity.admin_id = :adminId', { adminId });
+      query.andWhere('activity.admin_id = :adminId', { adminId });
+    }
+
+    if (userId) {
+      const user = await this.usersRepository.findOne({
+        where: { id: userId },
+      });
+      if (user) {
+        query.andWhere('activity.email = :email', { email: user.email });
+      }
+    }
+
+    if (actionType) {
+      query.andWhere('activity.action = :actionType', { actionType });
+    }
+
+    if (startDate) {
+      query.andWhere('activity.created_at >= :startDate', { startDate });
+    }
+
+    if (endDate) {
+      query.andWhere('activity.created_at <= :endDate', { endDate });
     }
 
     return await query.getMany();
+  }
+
+  async getActivityStatistics(): Promise<Record<string, any>> {
+    const actionCounts = await this.userActivityRepository
+      .createQueryBuilder('activity')
+      .select('activity.action, COUNT(*) as count')
+      .groupBy('activity.action')
+      .getRawMany();
+
+    const mostActiveUsers = await this.userActivityRepository
+      .createQueryBuilder('activity')
+      .select('activity.email, activity.user_name, COUNT(*) as count')
+      .groupBy('activity.email')
+      .orderBy('count', 'DESC')
+      .limit(5)
+      .getRawMany();
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const activityByDay = await this.userActivityRepository
+      .createQueryBuilder('activity')
+      .select('DATE(activity.created_at) as date, COUNT(*) as count')
+      .where('activity.created_at >= :sevenDaysAgo', { sevenDaysAgo })
+      .groupBy('date')
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return {
+      actionCounts,
+      mostActiveUsers,
+      activityByDay,
+      totalActivities: await this.userActivityRepository.count(),
+    };
+  }
+
+  async cleanupOldActivities(daysToKeep: number = 90): Promise<number> {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+    const result = await this.userActivityRepository
+      .createQueryBuilder()
+      .delete()
+      .from(UserActivity)
+      .where('created_at < :cutoffDate', { cutoffDate })
+      .execute();
+
+    return result.affected || 0;
   }
 }

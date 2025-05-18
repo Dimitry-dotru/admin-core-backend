@@ -1,7 +1,7 @@
 import { Entity, OneToOne, Column, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { AbstractEntity } from 'common/entities/abstract.entity';
-import { UserActivity } from 'src/user-activity/entities/user-activity.entity';
+import { UserActivity } from 'src/user-activity/entitites/user-activity.entity';
 
 @Entity()
 export class Admin extends AbstractEntity {

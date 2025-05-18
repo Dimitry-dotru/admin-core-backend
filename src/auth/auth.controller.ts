@@ -3,11 +3,11 @@ import {
   Post,
   Body,
   UseGuards,
+  Request,
   HttpCode,
   HttpStatus,
   Put,
   UnauthorizedException,
-  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -29,41 +29,45 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
 import { User } from 'src/users/entities/user.entity';
 import { UserActivityService } from 'src/user-activity/user-activity.service';
 import { ActivityActionType } from 'common/enums/activity-action-type';
+import { Request as ExpressRequest } from 'express';
+
+interface RequestWithUser extends ExpressRequest {
+  user: User;
+}
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private readonly activityService: UserActivityService,
+    private readonly userActivityService: UserActivityService,
   ) {}
 
   @ApiOperation({ summary: 'Email+password auth' })
   @ApiBody({ type: AuthPayloadDto })
   @Post('login')
   @UseGuards(LocalAuthGuard)
-  async login(@Request() req: { user: User }) {
+  async login(@Request() req: RequestWithUser) {
     if (req.user.is_blocked) {
       throw new UnauthorizedException('You are blocked!');
     }
-    const loginResult = this.authService.login(req.user);
 
     try {
-      await this.activityService.logActivity({
+      await this.userActivityService.logActivity({
         action: ActivityActionType.LOGIN,
         userId: req.user.id,
         details: `User ${req.user.username} logged in`,
         metadata: {
-          user_id: req.user.id,
           email: req.user.email,
           timestamp: new Date().toISOString(),
         },
+        request: req,
       });
     } catch (error) {
       console.error('Failed to log user activity:', error);
     }
 
-    return loginResult;
+    return this.authService.login(req.user);
   }
 
   @Post('register')

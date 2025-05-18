@@ -39,7 +39,6 @@ export class UserActivity extends AbstractEntity {
 
   @Column({ nullable: true })
   admin_id: number;
-
   constructor(partial: Partial<UserActivity>) {
     super(partial);
     Object.assign(this, partial);
