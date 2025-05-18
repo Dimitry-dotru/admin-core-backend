@@ -124,10 +124,42 @@ export class AdminsService {
   }
 
   async remove(id: number): Promise<void> {
-    const admin = await this.findOne(id);
+    const admin = await this.adminsRepository.findOne({
+      where: {
+        user: {
+          id,
+        },
+      },
+    });
+
+    if (!admin) {
+      throw new HttpException(
+        `Admin with ID ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
 
     await this.adminsRepository.remove(admin);
 
     await this.usersService.remove(admin.user.id);
+  }
+
+  async toggleBan(id: number): Promise<boolean> {
+    const user = await this.usersRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) {
+      throw new HttpException(
+        `User with ID ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    user.is_blocked = !user.is_blocked;
+    await this.usersRepository.save(user);
+    return true;
   }
 }

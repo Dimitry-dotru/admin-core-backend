@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   Put,
+  UnauthorizedException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -37,6 +38,10 @@ export class AuthController {
   @Post('login')
   @UseGuards(LocalAuthGuard)
   login(@Request() req: { user: User }) {
+    if (req.user.is_blocked) {
+      throw new UnauthorizedException('You are blocked!');
+    }
+
     return this.authService.login(req.user);
   }
 

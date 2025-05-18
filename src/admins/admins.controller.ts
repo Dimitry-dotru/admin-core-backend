@@ -57,6 +57,18 @@ export class AdminsController {
     return this.adminsService.findOne(+id);
   }
 
+  @Post('toggle-ban/:id')
+  @RequireAdminRights(['can_manage_users'])
+  @ApiOperation({ summary: 'Block admin by id' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return boolean of success of operation',
+  })
+  block(@Param('id') id: number) {
+    console.log('Toggling...', id);
+    return this.adminsService.toggleBan(id);
+  }
+
   @Patch(':id')
   @RequireAdminRights(['can_manage_users'])
   @ApiOperation({ summary: 'Update an admin' })

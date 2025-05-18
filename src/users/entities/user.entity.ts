@@ -21,6 +21,9 @@ export class User extends AbstractEntity {
   @Column({ default: UserRoles.EDITOR })
   role: UserRoles;
 
+  @Column({ default: false })
+  is_blocked: boolean;
+
   @Column({ nullable: true })
   phone_number?: string;
 

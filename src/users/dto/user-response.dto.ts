@@ -21,6 +21,10 @@ export class UserResponseDto {
   is_verified: boolean;
 
   @Expose()
+  @ApiProperty()
+  is_blocked: boolean;
+
+  @Expose()
   @ApiProperty({ required: false })
   phone_number?: string;
 
