@@ -1,5 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  IsArray,
+} from 'class-validator';
 import { ProductStatus } from 'common/enums/product-status';
 import { StoreType } from 'common/enums/store-type.enum';
 
@@ -27,4 +34,14 @@ export class CreateProductDto {
   @IsNumber()
   @Min(0)
   price: number;
+
+  @ApiProperty({
+    example: [1, 2],
+    description: 'Array of category IDs',
+    required: false,
+  })
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @IsOptional()
+  categoryIds?: number[];
 }

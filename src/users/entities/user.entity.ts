@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 import { Admin } from '../../admins/entities/admin.entity';
 import { OtpCode } from 'src/otp/entities/otp.entity';
 import { AbstractEntity } from 'common/entities/abstract.entity';
+import { UserRoles } from 'common/enums/user-roles.enum';
 
 @Entity()
 export class User extends AbstractEntity {
@@ -16,6 +17,9 @@ export class User extends AbstractEntity {
 
   @Column({ default: false })
   is_verified: boolean;
+
+  @Column({ default: UserRoles.EDITOR })
+  role: UserRoles;
 
   @Column({ nullable: true })
   phone_number?: string;

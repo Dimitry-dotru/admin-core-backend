@@ -12,7 +12,4 @@ export class Admin extends AbstractEntity {
 
   @Column({ default: false })
   can_manage_users: boolean;
-
-  @Column({ default: false })
-  can_manage_content: boolean;
 }

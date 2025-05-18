@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import { StoreType } from 'common/enums/store-type.enum';
 import { Product } from '../entities/product.entity';
 import { ProductStatus } from 'common/enums/product-status';
+import { CategoryResponseDto } from 'src/category/dto/category-response.dto';
 
 @Exclude()
 export class ProductResponseDto {
@@ -29,6 +30,11 @@ export class ProductResponseDto {
   @Expose()
   @ApiProperty()
   price: number;
+
+  @Expose()
+  @ApiProperty({ type: [CategoryResponseDto] })
+  @Type(() => CategoryResponseDto)
+  categories: CategoryResponseDto[];
 
   @Expose()
   @ApiProperty()

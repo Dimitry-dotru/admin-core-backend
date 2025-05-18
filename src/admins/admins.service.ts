@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Admin } from './entities/admin.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -39,7 +39,6 @@ export class AdminsService {
     const admin = this.adminsRepository.create({
       is_super_admin: createAdminDto.is_super_admin || false,
       can_manage_users: createAdminDto.can_manage_users || false,
-      can_manage_content: createAdminDto.can_manage_content || false,
     });
 
     admin.user = savedUser;
@@ -47,8 +46,21 @@ export class AdminsService {
     return this.adminsRepository.save(admin);
   }
 
-  async findAll(): Promise<Admin[]> {
-    return await this.adminsRepository.find({ relations: ['user'] });
+  async findAll(exceptUserId?: number): Promise<Admin[]> {
+    if (exceptUserId) {
+      return await this.adminsRepository.find({
+        where: {
+          user: {
+            id: Not(exceptUserId),
+          },
+        },
+        relations: ['user'],
+      });
+    } else {
+      return await this.adminsRepository.find({
+        relations: ['user'],
+      });
+    }
   }
 
   async findOne(id: number): Promise<Admin> {
@@ -106,10 +118,6 @@ export class AdminsService {
 
     if (updateAdminDto.can_manage_users !== undefined) {
       admin.can_manage_users = updateAdminDto.can_manage_users;
-    }
-
-    if (updateAdminDto.can_manage_content !== undefined) {
-      admin.can_manage_content = updateAdminDto.can_manage_content;
     }
 
     return await this.adminsRepository.save(admin);
