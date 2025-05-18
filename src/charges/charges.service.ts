@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
+import { Charge } from './entities/charge.entity';
 
 @Injectable()
 export class ChargesService {
-  create(createChargeDto: CreateChargeDto) {
-    return 'This action adds a new charge';
+  constructor(
+    @InjectRepository(Charge)
+    private readonly chargeRepository: Repository<Charge>,
+  ) {}
+
+  async create(createChargeDto: CreateChargeDto): Promise<Charge> {
+    const charge = this.chargeRepository.create({
+      date: createChargeDto.date,
+      amount: createChargeDto.amount,
+      product: createChargeDto.product,
+      payment_platform: createChargeDto.payment_platform,
+      status: createChargeDto.status,
+    });
+
+    return await this.chargeRepository.save(charge);
   }
 
-  findAll() {
-    return `This action returns all charges`;
+  async findAll(): Promise<Charge[]> {
+    return await this.chargeRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} charge`;
+  async findOne(id: number): Promise<Charge> {
+    const charge = await this.chargeRepository.findOne({
+      where: { id },
+    });
+
+    if (!charge) {
+      throw new HttpException(
+        `Charge with ID ${id} not found`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    return charge;
+  }
+  async update(id: number, updateChargeDto: UpdateChargeDto): Promise<Charge> {
+    const charge = await this.findOne(id);
+
+    // if (updateChargeDto.user_id) {
+    //   charge.user = { id: updateChargeDto.user_id } as any;
+    //   delete updateChargeDto.user_id;
+    // }
+
+    const updatedCharge = Object.assign(charge, updateChargeDto);
+
+    return await this.chargeRepository.save(updatedCharge);
   }
 
-  update(id: number, updateChargeDto: UpdateChargeDto) {
-    return `This action updates a #${id} charge`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} charge`;
+  async remove(id: number): Promise<void> {
+    const charge = await this.findOne(id);
+    await this.chargeRepository.remove(charge);
   }
 }
