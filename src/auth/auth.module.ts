@@ -14,7 +14,6 @@ import { LocalStrategy } from './strategies/local.strategy';
     UsersModule,
     OtpModule,
     PassportModule,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

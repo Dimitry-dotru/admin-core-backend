@@ -1,6 +1,7 @@
-import { Entity, OneToOne, Column } from 'typeorm';
+import { Entity, OneToOne, Column, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { AbstractEntity } from 'common/entities/abstract.entity';
+import { UserActivity } from 'src/user-activity/entities/user-activity.entity';
 
 @Entity()
 export class Admin extends AbstractEntity {
@@ -12,4 +13,7 @@ export class Admin extends AbstractEntity {
 
   @Column({ default: false })
   can_manage_users: boolean;
+
+  @OneToMany(() => UserActivity, (activity) => activity.admin)
+  activities: UserActivity[];
 }
