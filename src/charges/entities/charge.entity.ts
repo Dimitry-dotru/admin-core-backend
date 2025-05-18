@@ -1,29 +1,42 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { AbstractEntity } from 'common/entities/abstract.entity';
+import { Product } from 'src/products/entities/product.entity';
 import { PaymentPlatform } from 'common/enums/payment-platforms';
 import { ChargeStatus } from 'common/enums/charge-status';
 
 @Entity()
 export class Charge extends AbstractEntity {
-  @Column({ type: 'date' })
+  @Column({
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   date: Date;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column('decimal', { precision: 10, scale: 2 })
   amount: number;
 
-  @Column()
-  product: string;
+  @ManyToOne(() => Product, (product) => product.charges, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'product_id' })
+  product: Product | null;
 
   @Column({
     type: 'enum',
     enum: PaymentPlatform,
+    default: PaymentPlatform.STRIPE,
   })
   payment_platform: PaymentPlatform;
 
   @Column({
     type: 'enum',
     enum: ChargeStatus,
-    default: ChargeStatus.ACTIVE,
+    default: ChargeStatus.INACTIVE,
   })
   status: ChargeStatus;
+
+  constructor(partial: Partial<Charge>) {
+    super(partial);
+  }
 }

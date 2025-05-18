@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -42,4 +43,9 @@ export class CreateChargeDto {
   @IsNumber()
   @IsNotEmpty()
   user_id: number;
+
+  @ApiProperty({ example: 1, required: false })
+  @IsNumber()
+  @IsOptional()
+  productId?: number;
 }

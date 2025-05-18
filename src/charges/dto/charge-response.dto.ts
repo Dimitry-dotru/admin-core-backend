@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ChargeStatus } from 'common/enums/charge-status';
 import { PaymentPlatform } from 'common/enums/payment-platforms';
+import { ProductResponseDto } from 'src/products/dto/product-response.dto';
 
 export class ChargeResponseDto {
   @ApiProperty()
@@ -12,8 +13,12 @@ export class ChargeResponseDto {
   @ApiProperty()
   amount: number;
 
-  @ApiProperty()
-  product: string;
+  @ApiProperty({
+    type: () => ProductResponseDto,
+    nullable: true,
+    description: 'The associated product or null if no product is associated',
+  })
+  product: ProductResponseDto | null;
 
   @ApiProperty({ enum: PaymentPlatform })
   payment_platform: PaymentPlatform;

@@ -4,32 +4,49 @@ import { Repository } from 'typeorm';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
 import { Charge } from './entities/charge.entity';
+import { Product } from 'src/products/entities/product.entity';
 
 @Injectable()
 export class ChargesService {
   constructor(
     @InjectRepository(Charge)
-    private readonly chargeRepository: Repository<Charge>,
+    private readonly chargesRepository: Repository<Charge>,
+    @InjectRepository(Product)
+    private readonly productsRepository: Repository<Product>,
   ) {}
 
-  async create(createChargeDto: CreateChargeDto): Promise<Charge> {
-    const charge = this.chargeRepository.create({
-      date: createChargeDto.date,
-      amount: createChargeDto.amount,
-      product: createChargeDto.product,
-      payment_platform: createChargeDto.payment_platform,
-      status: createChargeDto.status,
+  async create(createChargeDto: CreateChargeDto) {
+    const charge = this.chargesRepository.create({
+      ...createChargeDto,
+      product: undefined,
     });
 
-    return await this.chargeRepository.save(charge);
+    if (createChargeDto.productId) {
+      const product = await this.productsRepository.findOne({
+        where: { id: createChargeDto.productId },
+      });
+
+      if (!product) {
+        throw new HttpException(
+          `Product with ID ${createChargeDto.productId} not found`,
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      charge.product = product;
+    }
+
+    return this.chargesRepository.save(charge);
   }
 
   async findAll(): Promise<Charge[]> {
-    return await this.chargeRepository.find();
+    return await this.chargesRepository.find({
+      relations: ['product'],
+    });
   }
 
   async findOne(id: number): Promise<Charge> {
-    const charge = await this.chargeRepository.findOne({
+    const charge = await this.chargesRepository.findOne({
       where: { id },
     });
 
@@ -52,11 +69,11 @@ export class ChargesService {
 
     const updatedCharge = Object.assign(charge, updateChargeDto);
 
-    return await this.chargeRepository.save(updatedCharge);
+    return await this.chargesRepository.save(updatedCharge);
   }
 
   async remove(id: number): Promise<void> {
     const charge = await this.findOne(id);
-    await this.chargeRepository.remove(charge);
+    await this.chargesRepository.remove(charge);
   }
 }
