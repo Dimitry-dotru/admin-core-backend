@@ -24,13 +24,59 @@ import {
   AdminRightsGuard,
   RequireAdminRights,
 } from 'src/auth/guards/admin-rights.guard';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('admins')
 @Controller('admins')
 @UseGuards(JwtAuthGuard, AdminRightsGuard)
 @ApiBearerAuth('access-token')
 export class AdminsController {
-  constructor(private readonly adminsService: AdminsService) {}
+  constructor(
+    private readonly adminsService: AdminsService,
+    private readonly configService: ConfigService,
+  ) {
+    void this.createDefaultAdmin();
+  }
+
+  private async createDefaultAdmin() {
+    const adminEmail =
+      this.configService.get<string>('ADMIN_EMAIL') || 'admin@example.com';
+    const adminPassword =
+      this.configService.get<string>('ADMIN_PASSWORD') || 'Admin123456';
+    const adminUsername =
+      this.configService.get<string>('ADMIN_USERNAME') || 'admin';
+
+    try {
+      try {
+        const admins = await this.adminsService.findAll();
+        const adminExists = admins.some(
+          (admin) => admin.user.email === adminEmail,
+        );
+
+        if (adminExists) {
+          console.log(
+            `Admin with email ${adminEmail} already exists. Skipping creation.`,
+          );
+          return;
+        }
+      } catch (error) {
+        console.error('Error fetching admins:', error);
+      }
+
+      await this.adminsService.create({
+        email: adminEmail,
+        password: adminPassword,
+        username: adminUsername,
+        is_super_admin: true,
+        can_manage_users: true,
+        can_manage_content: true,
+      });
+
+      console.log('Default admin created successfully!');
+    } catch (error) {
+      console.error('Failed to create default admin:', error);
+    }
+  }
 
   @Post()
   @RequireAdminRights(['can_manage_users'])
