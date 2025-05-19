@@ -1,33 +1,6 @@
 version: '3.8'
 
 services:
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nest-api
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-      - NODE_ENV=production
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USERNAME=nestuser
-      - DB_PASSWORD=nestpassword
-      - DB_DATABASE=nestdb
-      - DB_SYNCHRONIZE=true
-      - JWT_SECRET=yoursecretkey
-      - JWT_EXPIRES_IN=30d
-    volumes:
-      - ./:/app
-      - /app/node_modules
-    depends_on:
-      - mysql
-    networks:
-      - nest-network
-
   mysql:
     image: mysql:8.0
     container_name: nest-mysql
@@ -44,6 +17,49 @@ services:
     networks:
       - nest-network
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "nestuser", "-pnestpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: nest-minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"  
+      - "9001:9001"  
+    volumes:
+      - minio-data:/data
+    networks:
+      - nest-network
+    command: server --console-address ":9001" /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # This service creates the required buckets in MinIO
+  createbuckets:
+    image: minio/mc
+    container_name: nest-minio-createbuckets
+    depends_on:
+      - minio
+    networks:
+      - nest-network
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/uploads;
+      /usr/bin/mc policy set public myminio/uploads;
+      exit 0;
+      "
 
 networks:
   nest-network:
@@ -51,4 +67,6 @@ networks:
 
 volumes:
   mysql-data:
+    driver: local
+  minio-data:
     driver: local

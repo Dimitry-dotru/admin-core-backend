@@ -34,7 +34,15 @@ export class ChargesService {
     return this.chargesRepository.save(charge);
   }
 
-  async findAll(): Promise<Charge[]> {
+  async findAll(lastAmount?: number): Promise<Charge[]> {
+    if (lastAmount) {
+      return await this.chargesRepository.find({
+        relations: ['product'],
+        order: { created_at: 'DESC' },
+        take: lastAmount,
+      });
+    }
+
     return await this.chargesRepository.find({
       relations: ['product'],
     });

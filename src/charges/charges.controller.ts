@@ -49,6 +49,17 @@ export class ChargesController {
     return this.chargesService.findAll();
   }
 
+  @Get('recent')
+  @ApiOperation({ summary: 'Get recent 7 charges' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return recent 7 charges',
+    type: [ChargeResponseDto],
+  })
+  findAllRecent() {
+    return this.chargesService.findAll(7);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a charge by ID' })
   @ApiResponse({
