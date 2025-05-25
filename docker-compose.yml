@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -29,10 +28,10 @@ services:
     restart: unless-stopped
     environment:
       - MINIO_ROOT_USER=minioadmin
-      - MINIO_ROOT_PASSWORD=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
     ports:
-      - "9000:9000"  
-      - "9001:9001"  
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio-data:/data
     networks:
@@ -44,20 +43,21 @@ services:
       timeout: 20s
       retries: 3
 
-  # This service creates the required buckets in MinIO
   createbuckets:
     image: minio/mc
     container_name: nest-minio-createbuckets
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     networks:
       - nest-network
     entrypoint: >
       /bin/sh -c "
       sleep 5;
-      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb myminio/uploads;
-      /usr/bin/mc policy set public myminio/uploads;
+      /usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin123;
+      /usr/bin/mc mb local/my-bucket;
+      /usr/bin/mc anonymous set public local/my-bucket;
+      echo 'Bucket my-bucket created and public policy set successfully!';
       exit 0;
       "
 
