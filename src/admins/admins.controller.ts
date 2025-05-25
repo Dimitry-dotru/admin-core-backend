@@ -7,12 +7,14 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { AdminsService } from './admins.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -49,7 +51,8 @@ export class AdminsController {
     try {
       try {
         const admins = await this.adminsService.findAll();
-        const adminExists = admins.some(
+
+        const adminExists = admins.data.some(
           (admin) => admin.user.email === adminEmail,
         );
 
@@ -90,9 +93,15 @@ export class AdminsController {
   @RequireAdminRights(['can_manage_users'])
   @ApiOperation({ summary: 'Get all admins' })
   @ApiResponse({ status: 200, description: 'Return all admins' })
-  findAll(@CurrentUser() user: User) {
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
+  findAll(
+    @CurrentUser() user: User,
+    @Query('page') page?: number,
+    @Query('take') take?: number,
+  ) {
     console.log('User:', user);
-    return this.adminsService.findAll(user.id);
+    return this.adminsService.findAll(user.id, page || 1, take || 10);
   }
 
   @Get(':id')

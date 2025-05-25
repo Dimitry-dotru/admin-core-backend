@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSupportTicketDto } from './dto/create-support-ticket.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { SupportTicket } from './entities/support-ticket.entity';
-import { Between, FindOptionsWhere, Like, Repository } from 'typeorm';
+import { Between, FindOptionsWhere, Repository } from 'typeorm';
 import { TicketStatus } from 'common/enums/support-status.enum';
 
 interface CountResult {
@@ -15,21 +15,6 @@ interface AvgResolutionTimeResult {
 
 interface AvgRepliesResult {
   avgReplies: string | null;
-}
-
-interface StatusCountResult {
-  ticket_status: string;
-  count: string;
-}
-
-interface CategoryCountResult {
-  category: string;
-  count: string;
-}
-
-interface DateCountResult {
-  date: string;
-  count: string;
 }
 
 @Injectable()
@@ -47,7 +32,6 @@ export class SupportTicketService {
     page = 1,
     take = 10,
     ticket_status?: TicketStatus,
-    company_name?: string,
     start_date?: string,
     end_date?: string,
   ) {
@@ -56,10 +40,6 @@ export class SupportTicketService {
 
     if (ticket_status) {
       where.ticket_status = ticket_status;
-    }
-
-    if (company_name) {
-      where.company_name = Like(`%${company_name}%`);
     }
 
     if (start_date && end_date) {

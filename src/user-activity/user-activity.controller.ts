@@ -47,12 +47,8 @@ export class UserActivityController {
     description: 'Return recent user activities based on filters',
     type: [UserActivity],
   })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Maximum number of activities to return',
-  })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({
     name: 'adminId',
     required: false,
@@ -74,30 +70,32 @@ export class UserActivityController {
   @ApiQuery({
     name: 'startDate',
     required: false,
-    type: Date,
-    description: 'Filter by start date',
+    type: String,
+    description: 'Filter by start date (YYYY-MM-DD)',
   })
   @ApiQuery({
     name: 'endDate',
     required: false,
-    type: Date,
-    description: 'Filter by end date',
+    type: String,
+    description: 'Filter by end date (YYYY-MM-DD)',
   })
   async getRecentActivities(
-    @Query('limit') limit?: number,
+    @Query('page') page?: number,
+    @Query('take') take?: number,
     @Query('adminId') adminId?: number,
     @Query('userId') userId?: number,
     @Query('actionType') actionType?: ActivityActionType,
-    @Query('startDate') startDate?: Date,
-    @Query('endDate') endDate?: Date,
+    @Query('start_date') start_date?: string,
+    @Query('end_date') end_date?: string,
   ) {
     return this.userActivityService.getRecentActivities(
-      limit,
+      page || 1,
+      take || 10,
       adminId,
       userId,
       actionType,
-      startDate,
-      endDate,
+      start_date ? new Date(start_date) : undefined,
+      end_date ? new Date(end_date) : undefined,
     );
   }
 

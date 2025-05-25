@@ -11,6 +11,8 @@ import { CategoriesModule } from './category/category.module';
 import { UserActivityModule } from './user-activity/user-activity.module';
 import { SupportTicketModule } from './support-ticket/support-ticket.module';
 import { StatisticsModule } from './statistics/statistics.module';
+import { MinioModule } from './minio/minio.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { StatisticsModule } from './statistics/statistics.module';
     UserActivityModule,
     SupportTicketModule,
     StatisticsModule,
+    MinioModule,
+    ImagesModule,
   ],
 })
 export class AppModule {}

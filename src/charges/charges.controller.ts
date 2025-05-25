@@ -7,6 +7,9 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ChargesService } from './charges.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
@@ -17,8 +20,11 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ChargeResponseDto } from './dto/charge-response.dto';
+import { PaymentPlatform } from 'common/enums/payment-platforms';
+import { ChargeStatus } from 'common/enums/charge-status';
 
 @ApiTags('charges')
 @Controller('charges')
@@ -39,14 +45,72 @@ export class ChargesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all charges' })
+  @ApiOperation({ summary: 'Get all charges with pagination and filters' })
   @ApiResponse({
     status: 200,
-    description: 'Return all charges',
+    description: 'Return paginated charges with filters',
     type: [ChargeResponseDto],
   })
-  findAll() {
-    return this.chargesService.findAll();
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'payment_platform',
+    required: false,
+    enum: PaymentPlatform,
+    description: 'Filter by payment platform',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: ChargeStatus,
+    description: 'Filter by charge status',
+  })
+  @ApiQuery({
+    name: 'start_date',
+    required: false,
+    type: String,
+    description: 'Filter by start date (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'end_date',
+    required: false,
+    type: String,
+    description: 'Filter by end date (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'product_name',
+    required: false,
+    type: String,
+    description: 'Filter by product name',
+  })
+  findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number,
+    @Query('payment_platform') payment_platform?: PaymentPlatform,
+    @Query('status') status?: ChargeStatus,
+    @Query('start_date') start_date?: string,
+    @Query('end_date') end_date?: string,
+    @Query('product_name') product_name?: string,
+  ) {
+    return this.chargesService.findAll(
+      page,
+      take,
+      payment_platform,
+      status,
+      start_date,
+      end_date,
+      product_name,
+    );
   }
 
   @Get('recent')
@@ -57,7 +121,7 @@ export class ChargesController {
     type: [ChargeResponseDto],
   })
   findAllRecent() {
-    return this.chargesService.findAll(7);
+    return this.chargesService.findAllRecent(7);
   }
 
   @Get(':id')

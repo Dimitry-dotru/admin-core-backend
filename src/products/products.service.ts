@@ -40,10 +40,36 @@ export class ProductsService {
     return await this.productsRepository.save(product);
   }
 
-  async findAll(): Promise<Product[]> {
-    return await this.productsRepository.find({
+  async findAll(
+    page = 1,
+    take = 10,
+  ): Promise<{
+    data: Product[];
+    meta: {
+      page: number;
+      take: number;
+      item_count: number;
+      page_count: number;
+    };
+  }> {
+    const skip = (page - 1) * take;
+
+    const [data, total] = await this.productsRepository.findAndCount({
       relations: ['categories'],
+      order: { created_at: 'DESC' },
+      skip,
+      take,
     });
+
+    return {
+      data,
+      meta: {
+        page,
+        take,
+        item_count: total,
+        page_count: Math.ceil(total / take),
+      },
+    };
   }
 
   async findActive(): Promise<Product[]> {

@@ -30,6 +30,10 @@ export class SupportTicket extends AbstractEntity {
   @Column({ nullable: true })
   company_name: string;
 
+  @ApiProperty({ example: 'ejedima260@gmail.com' })
+  @Column({ nullable: false, default: 'ejedima260@gmail.com' })
+  assigned_to_mail: string;
+
   @ApiProperty({ example: TicketStatus.NEW, enum: TicketStatus })
   @Column({
     type: 'enum',

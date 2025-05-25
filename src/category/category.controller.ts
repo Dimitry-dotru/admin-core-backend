@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -19,6 +20,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { CategoriesService } from './category.service';
 
@@ -51,9 +53,17 @@ export class CategoriesController {
     description: 'Return all categories',
     type: [CategoryResponseDto],
   })
-  async findAll(): Promise<CategoryResponseDto[]> {
-    const categories = await this.categoriesService.findAll();
-    return categories.map((category) => new CategoryResponseDto(category));
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
+  async findAll(
+    @Query('page') page?: number,
+    @Query('take') take?: number,
+  ): Promise<{ data: CategoryResponseDto[]; meta: any }> {
+    const result = await this.categoriesService.findAll(page || 1, take || 10);
+    return {
+      data: result.data.map((category) => new CategoryResponseDto(category)),
+      meta: result.meta,
+    };
   }
 
   @Get('active')

@@ -68,6 +68,15 @@ To run this project, you'll need:
    docker-compose down -v
    ```
 
+6. **Minio setting public bucket**
+
+   ```bash
+   docker exec -it minio sh -c "
+      mc alias set local http://localhost:9000 minioadmin minioadmin123 &&
+      mc anonymous set public local/my-bucket &&
+      echo 'Public policy set successfully!'"
+   ```
+
 ## Environment Variables
 
 The following environment variables can be modified in the `docker-compose.yml` file:

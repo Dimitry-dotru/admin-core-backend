@@ -140,20 +140,21 @@ export class UserActivityService {
   }
 
   async getRecentActivities(
-    limit: number = 50,
+    page = 1,
+    take = 10,
     adminId?: number,
     userId?: number,
     actionType?: ActivityActionType,
     startDate?: Date,
     endDate?: Date,
-  ): Promise<UserActivity[]> {
+  ): Promise<{ data: UserActivity[]; meta: any }> {
+    const skip = (page - 1) * take;
+
     const query = this.userActivityRepository
       .createQueryBuilder('activity')
-      .orderBy('activity.created_at', 'DESC');
-
-    if (limit) {
-      query.take(limit);
-    }
+      .orderBy('activity.created_at', 'DESC')
+      .skip(skip)
+      .take(take);
 
     if (adminId) {
       query.andWhere('activity.admin_id = :adminId', { adminId });
@@ -180,7 +181,17 @@ export class UserActivityService {
       query.andWhere('activity.created_at <= :endDate', { endDate });
     }
 
-    return await query.getMany();
+    const [data, total] = await query.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        page,
+        take,
+        item_count: total,
+        page_count: Math.ceil(total / take),
+      },
+    };
   }
 
   async getActivityStatistics(): Promise<Record<string, any>> {

@@ -33,10 +33,8 @@ export class SupportTicketController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({ name: 'ticket_status', required: false, type: String })
-  @ApiQuery({ name: 'company_name', required: false, type: String })
   @ApiQuery({ name: 'start_date', required: false, type: String })
   @ApiQuery({ name: 'end_date', required: false, type: String })
-  @ApiQuery({ name: 'ticket_category_name', required: false, type: String })
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('take', new DefaultValuePipe(10), ParseIntPipe) take: number,
@@ -44,6 +42,7 @@ export class SupportTicketController {
     @Query('start_date') start_date?: string,
     @Query('end_date') end_date?: string,
   ) {
+    console.log('Query with date:', start_date, end_date);
     return this.supportTicketService.findAll(
       page,
       take,

@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Admin } from './entities/admin.entity';
 import { User } from '../users/entities/user.entity';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -46,21 +46,37 @@ export class AdminsService {
     return this.adminsRepository.save(admin);
   }
 
-  async findAll(exceptUserId?: number): Promise<Admin[]> {
+  async findAll(
+    exceptUserId?: number,
+    page = 1,
+    take = 10,
+  ): Promise<{ data: Admin[]; meta: any }> {
+    const skip = (page - 1) * take;
+
+    let queryBuilder = this.adminsRepository
+      .createQueryBuilder('admin')
+      .leftJoinAndSelect('admin.user', 'user')
+      .orderBy('admin.created_at', 'DESC')
+      .skip(skip)
+      .take(take);
+
     if (exceptUserId) {
-      return await this.adminsRepository.find({
-        where: {
-          user: {
-            id: Not(exceptUserId),
-          },
-        },
-        relations: ['user'],
-      });
-    } else {
-      return await this.adminsRepository.find({
-        relations: ['user'],
+      queryBuilder = queryBuilder.where('user.id != :exceptUserId', {
+        exceptUserId,
       });
     }
+
+    const [data, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        page,
+        take,
+        item_count: total,
+        page_count: Math.ceil(total / take),
+      },
+    };
   }
 
   async findOne(id: number): Promise<Admin> {

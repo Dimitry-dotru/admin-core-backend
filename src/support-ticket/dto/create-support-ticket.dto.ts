@@ -25,6 +25,10 @@ export class CreateSupportTicketDto {
   @IsEmail()
   requester_email: string;
 
+  @ApiProperty({ example: 'ejedima260@gmail.com' })
+  @IsEmail()
+  assigned_to_mail: string;
+
   @ApiProperty({ example: 'Issue with account login' })
   @IsString()
   subject: string;

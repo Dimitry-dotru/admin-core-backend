@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -20,6 +21,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiQuery,
 } from '@nestjs/swagger';
 
 @ApiTags('products')
@@ -52,9 +54,17 @@ export class ProductsController {
     description: 'Return all products',
     type: [ProductResponseDto],
   })
-  async findAll(): Promise<ProductResponseDto[]> {
-    const products = await this.productsService.findAll();
-    return products.map((product) => new ProductResponseDto(product));
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'take', required: false, type: Number })
+  async findAll(
+    @Query('page') page?: number,
+    @Query('take') take?: number,
+  ): Promise<{ data: ProductResponseDto[]; meta: any }> {
+    const result = await this.productsService.findAll(page || 1, take || 10);
+    return {
+      data: result.data.map((product) => new ProductResponseDto(product)),
+      meta: result.meta,
+    };
   }
 
   @Get('active')

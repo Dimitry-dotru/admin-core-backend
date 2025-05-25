@@ -29,8 +29,35 @@ export class CategoriesService {
     return await this.categoriesRepository.save(category);
   }
 
-  async findAll(): Promise<Category[]> {
-    return await this.categoriesRepository.find();
+  async findAll(
+    page = 1,
+    take = 10,
+  ): Promise<{
+    data: Category[];
+    meta: {
+      page: number;
+      take: number;
+      item_count: number;
+      page_count: number;
+    };
+  }> {
+    const skip = (page - 1) * take;
+
+    const [data, total] = await this.categoriesRepository.findAndCount({
+      order: { created_at: 'DESC' },
+      skip,
+      take,
+    });
+
+    return {
+      data,
+      meta: {
+        page,
+        take,
+        item_count: total,
+        page_count: Math.ceil(total / take),
+      },
+    };
   }
 
   async findActive(): Promise<Category[]> {
