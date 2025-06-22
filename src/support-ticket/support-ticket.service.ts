@@ -102,7 +102,6 @@ export class SupportTicketService {
     const avgReplies = await this.supportTicketRepository
       .createQueryBuilder('ticket')
       .select('AVG(ticket.reply_count)', 'avgReplies')
-      .where('ticket.ticket_status = :status', { status: 'closed' })
       .andWhere('ticket.reply_count > 0')
       .getRawOne<AvgRepliesResult>();
 

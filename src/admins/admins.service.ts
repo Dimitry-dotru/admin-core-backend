@@ -26,24 +26,25 @@ export class AdminsService {
   }
 
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
+    const admin = this.adminsRepository.create({
+      is_super_admin: createAdminDto.is_super_admin || false,
+      can_manage_users: createAdminDto.can_manage_users || false,
+    });
+
+    const savedAdmin = await this.adminsRepository.save(admin);
+
     const user = this.usersRepository.create({
       username: createAdminDto.username,
       email: createAdminDto.email,
       password: await this.hashPassword(createAdminDto.password),
       phone_number: createAdminDto.phone_number,
       is_verified: true,
+      admin: savedAdmin,
     });
 
-    const savedUser = await this.usersRepository.save(user);
+    await this.usersRepository.save(user);
 
-    const admin = this.adminsRepository.create({
-      is_super_admin: createAdminDto.is_super_admin || false,
-      can_manage_users: createAdminDto.can_manage_users || false,
-    });
-
-    admin.user = savedUser;
-
-    return this.adminsRepository.save(admin);
+    return savedAdmin;
   }
 
   async findAll(

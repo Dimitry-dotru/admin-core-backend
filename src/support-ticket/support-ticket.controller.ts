@@ -58,8 +58,10 @@ export class SupportTicketController {
     status: 200,
     description: 'Returns statistics for support tickets',
   })
-  getStatistics() {
-    return this.supportTicketService.getStatistics();
+  async getStatistics() {
+    const statistics = await this.supportTicketService.getStatistics();
+    console.log('Statistics sent:', statistics);
+    return statistics;
   }
 
   @Get(':id')
