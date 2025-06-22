@@ -31,7 +31,7 @@ export class User extends AbstractEntity {
   otps: OtpCode[];
 
   @OneToOne(() => Admin, (admin) => admin.user, {
-    nullable: true,
+    nullable: false,
     onDelete: 'CASCADE',
     cascade: false,
   })
