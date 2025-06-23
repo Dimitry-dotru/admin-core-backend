@@ -53,7 +53,7 @@ export class StatisticsService {
     charges.forEach((charge) => {
       const month = parseInt(charge.month, 10);
       const year = parseInt(charge.year, 10);
-      const key = `${months[month - 1]} ${year}`;
+      const key = `${months[month]} ${year}`;
       result[key] = parseFloat(charge.total);
     });
 

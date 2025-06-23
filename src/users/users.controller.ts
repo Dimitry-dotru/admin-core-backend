@@ -42,6 +42,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: User): Promise<UserResponseDto> {
     const fullUser = await this.usersService.findOne(user.id);
+    console.log('Response:', fullUser);
     return new UserResponseDto(fullUser);
   }
 
@@ -52,14 +53,15 @@ export class UsersController {
     return new UserResponseDto(user);
   }
 
-  @Put(':id')
+  @Put()
   @UseGuards(JwtAuthGuard)
   async update(
-    @Param('id') id: string,
+    @CurrentUser() user: User,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    const user = await this.usersService.update(+id, updateUserDto);
-    return new UserResponseDto(user);
+    console.log('Updated link:', updateUserDto);
+    const newUser = await this.usersService.update(user.id, updateUserDto);
+    return new UserResponseDto(newUser);
   }
 
   @Delete(':id')

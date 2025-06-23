@@ -7,6 +7,9 @@ export class UserResponseDto {
   id: number;
 
   @Expose()
+  avatar_url: string;
+
+  @Expose()
   username: string;
 
   @Expose()
